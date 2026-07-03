@@ -7,7 +7,9 @@ import Image from "next/image";
 const LINKS = [
   { href: "#uebertragung", label: "Biographie", index: "01" },
   { href: "#diskographie", label: "Diskographie", index: "02" },
-  { href: "#booking", label: "Booking", index: "03" },
+  { href: "#live-set", label: "Live-Set", index: "03" },
+  { href: "#tour", label: "Tour", index: "04" },
+  { href: "#booking", label: "Booking", index: "05" },
 ];
 
 export function Nav() {

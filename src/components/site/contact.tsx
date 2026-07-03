@@ -1,41 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { SOUNDCLOUD_URL } from "./soundcloud";
+import { BookingForm } from "./booking-form";
 
 const BOOKING_EMAIL = "booking@maschinenkindt.de";
 
 export function Contact() {
-  const [sent, setSent] = useState(false);
-
-  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = new FormData(e.currentTarget);
-    const name = String(form.get("name") ?? "");
-    const org = String(form.get("org") ?? "");
-    const date = String(form.get("date") ?? "");
-    const message = String(form.get("message") ?? "");
-
-    // No backend yet — compose a pre-filled booking mail. Swap for a real
-    // POST to your API/CRM when you're ready.
-    const subject = `Booking-Anfrage — ${name || "Maschinenkindt"}`;
-    const body = [
-      `Name / Act: ${name}`,
-      `Veranstalter: ${org}`,
-      `Wunschtermin: ${date}`,
-      "",
-      message,
-    ].join("\n");
-
-    window.location.href = `mailto:${BOOKING_EMAIL}?subject=${encodeURIComponent(
-      subject
-    )}&body=${encodeURIComponent(body)}`;
-    setSent(true);
-  }
-
-  const field =
-    "w-full border border-[var(--hairline)] bg-ash/60 px-4 py-3.5 font-tech text-bone placeholder:text-steel/70 transition-colors focus:border-ember focus:outline-none focus-visible:outline-none";
-
   return (
     <section
       id="booking"
@@ -47,9 +17,9 @@ export function Contact() {
         <div className="md:col-span-5">
           <p className="u-label mb-6 flex items-center gap-3">
             <span className="h-px w-10 bg-ember" />
-            Transmission 03 — Booking
+            Transmission 05 — Booking
           </p>
-          <h2 className="font-display mb-8 text-[clamp(2.4rem,6vw,5rem)] leading-[0.9] text-bone">
+          <h2 className="font-display font-semibold mb-8 text-[clamp(2.4rem,6vw,5rem)] leading-[0.9] text-bone">
             Ruf die<br />
             <span className="text-ember/90">Maschine.</span>
           </h2>
@@ -71,13 +41,19 @@ export function Contact() {
               </div>
             </a>
             <div className="flex gap-8 pt-2">
-              {["Instagram", "SoundCloud", "Bandcamp"].map((s) => (
+              {[
+                { label: "Instagram", href: "#" },
+                { label: "SoundCloud", href: SOUNDCLOUD_URL },
+                { label: "Bandcamp", href: "#" },
+              ].map((s) => (
                 <a
-                  key={s}
-                  href="#"
+                  key={s.label}
+                  href={s.href}
+                  target={s.href.startsWith("http") ? "_blank" : undefined}
+                  rel={s.href.startsWith("http") ? "noopener noreferrer" : undefined}
                   className="font-mono text-xs uppercase tracking-[0.2em] text-steel transition-colors hover:text-bone"
                 >
-                  {s}
+                  {s.label}
                 </a>
               ))}
             </div>
@@ -85,69 +61,7 @@ export function Contact() {
         </div>
 
         <div className="md:col-span-6 md:col-start-7">
-          {sent ? (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex h-full min-h-[24rem] flex-col items-center justify-center border border-ember/40 bg-ember/5 p-10 text-center"
-            >
-              <p className="font-display text-3xl text-bone">
-                Übertragung vorbereitet.
-              </p>
-              <p className="u-label mt-4 max-w-xs normal-case tracking-[0.18em]">
-                Dein Mail-Programm hat die Anfrage geöffnet. Sende sie ab —
-                Maschinenkindt empfängt.
-              </p>
-              <button
-                type="button"
-                onClick={() => setSent(false)}
-                className="mt-8 border border-bone/25 px-6 py-3 font-tech text-xs font-semibold uppercase tracking-[0.16em] text-bone transition-colors hover:border-ember hover:text-ember"
-              >
-                Neue Anfrage
-              </button>
-            </motion.div>
-          ) : (
-            <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2">
-              <label className="flex flex-col gap-2 sm:col-span-1">
-                <span className="u-label text-[0.58rem]">Name / Act</span>
-                <input name="name" required className={field} placeholder="Dein Name" />
-              </label>
-              <label className="flex flex-col gap-2 sm:col-span-1">
-                <span className="u-label text-[0.58rem]">Veranstalter</span>
-                <input name="org" className={field} placeholder="Club / Kollektiv" />
-              </label>
-              <label className="flex flex-col gap-2 sm:col-span-1">
-                <span className="u-label text-[0.58rem]">E-Mail</span>
-                <input
-                  name="email"
-                  type="email"
-                  required
-                  className={field}
-                  placeholder="du@domain.de"
-                />
-              </label>
-              <label className="flex flex-col gap-2 sm:col-span-1">
-                <span className="u-label text-[0.58rem]">Wunschtermin</span>
-                <input name="date" type="date" className={`${field} [color-scheme:dark]`} />
-              </label>
-              <label className="flex flex-col gap-2 sm:col-span-2">
-                <span className="u-label text-[0.58rem]">Nachricht</span>
-                <textarea
-                  name="message"
-                  required
-                  rows={5}
-                  className={`${field} resize-none`}
-                  placeholder="Ort, Rahmen, Slot-Länge, Budget …"
-                />
-              </label>
-              <button
-                type="submit"
-                className="u-clip sm:col-span-2 mt-2 inline-flex items-center justify-center gap-3 bg-ember px-8 py-4 font-tech text-sm font-semibold uppercase tracking-[0.16em] text-void transition-transform duration-200 hover:-translate-y-0.5"
-              >
-                Anfrage senden →
-              </button>
-            </form>
-          )}
+          <BookingForm />
         </div>
       </div>
     </section>

@@ -46,7 +46,7 @@ export function Music() {
               <span className="h-px w-10 bg-ember" />
               Archiv 02 — Diskographie
             </p>
-            <h2 className="font-display text-[clamp(2.4rem,6vw,5rem)] leading-[0.9] text-bone">
+            <h2 className="font-display font-semibold text-[clamp(2.4rem,6vw,5rem)] leading-[0.9] text-bone">
               Katalog der<br />
               <span className="text-ember/90">Maschinen</span>
             </h2>
@@ -149,7 +149,7 @@ function MusicCard({
         </div>
 
         <div className="mt-5 flex items-end justify-between gap-4">
-          <h3 className="font-display text-2xl leading-none text-bone transition-colors group-hover:text-ember">
+          <h3 className="font-display font-semibold text-2xl leading-none text-bone transition-colors group-hover:text-ember">
             {release.name}
           </h3>
         </div>

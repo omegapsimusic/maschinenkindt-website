@@ -1,12 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Pirata_One, Chakra_Petch, Space_Mono } from "next/font/google";
+import { Teko, Chakra_Petch, Space_Mono } from "next/font/google";
 import "./globals.css";
 import { SmoothScroll } from "@/components/site/smooth-scroll";
 
-const pirata = Pirata_One({
-  weight: "400",
+const teko = Teko({
+  weight: ["500", "600", "700"],
   subsets: ["latin"],
-  variable: "--font-pirata",
+  variable: "--font-teko",
   display: "swap",
 });
 
@@ -49,7 +49,7 @@ export default function RootLayout({
   return (
     <html
       lang="de"
-      className={`${pirata.variable} ${chakra.variable} ${spaceMono.variable}`}
+      className={`${teko.variable} ${chakra.variable} ${spaceMono.variable}`}
     >
       <body className="u-grain min-h-dvh antialiased">
         <SmoothScroll>{children}</SmoothScroll>

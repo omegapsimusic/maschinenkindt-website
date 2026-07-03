@@ -124,7 +124,7 @@ export function Hero() {
 
         <motion.h1
           variants={rise}
-          className="font-display u-ember-glow max-w-[16ch] text-[clamp(3.2rem,13vw,12rem)] leading-[0.82] tracking-tight text-bone"
+          className="font-display font-bold u-ember-glow max-w-[16ch] text-[clamp(3.2rem,13vw,12rem)] leading-[0.82] tracking-tight text-bone"
         >
           Maschinen&shy;kindt
         </motion.h1>

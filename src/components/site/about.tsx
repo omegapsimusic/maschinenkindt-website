@@ -95,7 +95,7 @@ export function About() {
       </div>
       <span
         aria-hidden
-        className="p-ghost font-display pointer-events-none absolute -left-4 top-8 -z-10 select-none text-[22vw] leading-none text-bone/[0.03]"
+        className="p-ghost font-display font-semibold pointer-events-none absolute -left-4 top-8 -z-10 select-none text-[22vw] leading-none text-bone/[0.03]"
       >
         Herkunft
       </span>
@@ -121,7 +121,7 @@ export function About() {
             Übertragung 01 — Herkunft
           </p>
 
-          <h2 className="font-display mb-10 text-[clamp(2.4rem,6vw,5rem)] leading-[0.9] text-bone">
+          <h2 className="font-display font-semibold mb-10 text-[clamp(2.4rem,6vw,5rem)] leading-[0.9] text-bone">
             <span className="block overflow-hidden">
               <span className="p-line block">Aus Stahl</span>
             </span>
@@ -162,7 +162,7 @@ export function About() {
               key={label}
               className="p-stat border-l border-[var(--hairline)] pl-5"
             >
-              <dt className="font-display text-5xl leading-none text-bone md:text-6xl">
+              <dt className="font-display font-bold text-5xl leading-none text-bone md:text-6xl">
                 {n}
               </dt>
               <dd className="u-label mt-2 text-[0.62rem] normal-case tracking-[0.22em]">

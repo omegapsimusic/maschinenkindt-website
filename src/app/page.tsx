@@ -3,6 +3,8 @@ import { Nav } from "@/components/site/nav";
 import { Hero } from "@/components/site/hero";
 import { About } from "@/components/site/about";
 import { Music } from "@/components/site/music";
+import { SoundCloud } from "@/components/site/soundcloud";
+import { GigGlobe } from "@/components/site/gig-globe";
 import { Contact } from "@/components/site/contact";
 
 export default function Home() {
@@ -13,6 +15,8 @@ export default function Home() {
         <Hero />
         <About />
         <Music />
+        <SoundCloud />
+        <GigGlobe />
         <Contact />
       </main>
 
