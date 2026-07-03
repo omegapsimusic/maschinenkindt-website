@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Sigil } from "./sigil";
@@ -42,6 +43,11 @@ export function About() {
         ease: "none",
         scrollTrigger: { trigger: root.current, scrub: 0.8 },
       });
+      gsap.to(q(".p-portrait"), {
+        yPercent: -14,
+        ease: "none",
+        scrollTrigger: { trigger: root.current, scrub: 0.7 },
+      });
 
       // Text lines rise + fade in as the block enters.
       gsap.from(q(".p-line"), {
@@ -77,7 +83,7 @@ export function About() {
     <section
       ref={root}
       id="uebertragung"
-      className="relative overflow-hidden border-t border-[var(--hairline)] py-28 md:py-40"
+      className="relative isolate overflow-hidden border-t border-[var(--hairline)] py-28 md:py-40"
     >
       {/* parallax backdrop layers */}
       <div aria-hidden className="p-grid u-grid absolute inset-0 -z-20 opacity-40" />
@@ -93,6 +99,20 @@ export function About() {
       >
         Herkunft
       </span>
+
+      {/* portrait — grayscale, faded into the void, sits behind the stat column */}
+      <div
+        aria-hidden
+        className="p-portrait pointer-events-none absolute -right-6 top-0 -z-10 h-full w-[min(46vw,560px)] [mask-image:linear-gradient(to_bottom,transparent,black_18%,black_75%,transparent),linear-gradient(to_left,black_35%,transparent)] [mask-composite:intersect]"
+      >
+        <Image
+          src="/photos/portrait.png"
+          alt=""
+          fill
+          sizes="560px"
+          className="object-cover object-top grayscale contrast-125 opacity-[0.14]"
+        />
+      </div>
 
       <div className="mx-auto grid max-w-[110rem] gap-16 px-5 md:grid-cols-12 md:px-14">
         <div className="p-copy md:col-span-7 md:col-start-1">

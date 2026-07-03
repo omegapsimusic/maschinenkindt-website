@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 const LINKS = [
   { href: "#uebertragung", label: "Biographie", index: "01" },
@@ -35,9 +36,16 @@ export function Nav() {
         <nav className="mx-auto flex max-w-[110rem] items-center justify-between px-5 py-3.5 md:px-10">
           <a
             href="#top"
-            className="font-display text-xl leading-none tracking-wide text-bone transition-colors hover:text-ember"
+            className="shrink-0 opacity-90 transition-opacity hover:opacity-100"
           >
-            Maschinenkindt
+            <Image
+              src="/logo/wordmark.png"
+              alt="Maschinenkindt"
+              width={1400}
+              height={467}
+              priority
+              className="h-6 w-auto md:h-7"
+            />
           </a>
 
           <ul className="hidden items-center gap-8 md:flex">
