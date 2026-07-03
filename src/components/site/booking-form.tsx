@@ -193,7 +193,6 @@ export function BookingForm() {
                       attempted && !data.name.trim() ? fieldInvalid : ""
                     }`}
                     placeholder="Dein Name"
-                    autoFocus
                   />
                 </label>
                 <label className="flex flex-col gap-2 sm:col-span-1">
