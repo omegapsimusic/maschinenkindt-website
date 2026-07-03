@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Canvas, type ThreeEvent } from "@react-three/fiber";
 import { OrbitControls, Html, Stars } from "@react-three/drei";
 import * as THREE from "three";
+import { mesh } from "topojson-client";
+import type { GeometryObject, Topology } from "topojson-specification";
 
 type Gig = {
   id: string;
@@ -36,6 +38,47 @@ function latLonToVec3(lat: number, lon: number, radius: number) {
   );
 }
 
+// Country/coastline outlines, projected onto the sphere so the gig markers
+// land on recognizable geography instead of a generic lat/long wireframe.
+function useCountryBorderGeometry(radius: number) {
+  const [topology, setTopology] = useState<Topology | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    fetch("/geo/countries-110m.json")
+      .then((r) => r.json())
+      .then((data: Topology) => alive && setTopology(data))
+      .catch(() => {
+        /* borders are decorative — silently keep the plain wireframe */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  return useMemo(() => {
+    if (!topology) return null;
+
+    const lines = mesh(topology, topology.objects.countries as GeometryObject);
+    const positions: number[] = [];
+
+    for (const line of lines.coordinates) {
+      for (let i = 0; i < line.length - 1; i++) {
+        const a = latLonToVec3(line[i][1], line[i][0], radius);
+        const b = latLonToVec3(line[i + 1][1], line[i + 1][0], radius);
+        positions.push(a.x, a.y, a.z, b.x, b.y, b.z);
+      }
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute(
+      "position",
+      new THREE.Float32BufferAttribute(positions, 3)
+    );
+    return geometry;
+  }, [topology, radius]);
+}
+
 function formatDate(iso: string) {
   return new Date(`${iso}T00:00:00`).toLocaleDateString("de-DE", {
     day: "2-digit",
@@ -55,6 +98,7 @@ function GlobeScene({
     () => GIGS.map((g) => ({ ...g, pos: latLonToVec3(g.lat, g.lon, RADIUS * 1.01) })),
     []
   );
+  const borderGeometry = useCountryBorderGeometry(RADIUS * 1.003);
 
   return (
     <group>
@@ -64,11 +108,18 @@ function GlobeScene({
         <meshStandardMaterial color="#0d1017" roughness={0.85} metalness={0.2} />
       </mesh>
 
-      {/* blueprint wireframe skin */}
+      {/* blueprint construction grid — faint, purely technical backdrop */}
       <mesh>
-        <sphereGeometry args={[RADIUS * 1.002, 24, 18]} />
-        <meshBasicMaterial color="#e7e3d8" wireframe transparent opacity={0.08} />
+        <sphereGeometry args={[RADIUS * 1.001, 24, 18]} />
+        <meshBasicMaterial color="#e7e3d8" wireframe transparent opacity={0.04} />
       </mesh>
+
+      {/* real country/coastline outlines — gives the markers geographic context */}
+      {borderGeometry && (
+        <lineSegments geometry={borderGeometry}>
+          <lineBasicMaterial color="#e7e3d8" transparent opacity={0.4} />
+        </lineSegments>
+      )}
 
       {/* rim glow shell */}
       <mesh>
