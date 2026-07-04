@@ -70,6 +70,21 @@
     background: color-mix(in oklch, var(--bone) 14%, transparent);
     border: 2px solid var(--void);
   }
+  /* Custom reticle cursor takes over on fine-pointer devices — see Cursor component */
+  @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    body {
+      cursor: none;
+    }
+  }
+}
+
+.mk-cursor-root {
+  display: none;
+}
+@media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .mk-cursor-root {
+    display: block;
+  }
 }
 
 @layer utilities {
@@ -143,6 +158,71 @@
 
   .u-vignette {
     box-shadow: inset 0 0 200px 40px var(--void);
+  }
+
+  /* Site-wide cinematic vignette — sits above content, ignores pointer */
+  .u-vignette-global::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 89;
+    pointer-events: none;
+    box-shadow: inset 0 0 12vw 1vw color-mix(in oklch, var(--void) 75%, transparent);
+  }
+
+  /* Ember glitch/flicker on hover — short RGB-split jitter, then settles */
+  .u-glitch-hover {
+    position: relative;
+    transition: color 0.15s ease;
+  }
+  .u-glitch-hover:hover,
+  .u-glitch-hover:focus-visible {
+    animation: u-glitch 0.35s steps(2, jump-none);
+  }
+  .u-glitch-hover:hover::before,
+  .u-glitch-hover:focus-visible::before {
+    content: attr(data-text);
+    position: absolute;
+    inset: 0;
+    color: var(--ember);
+    clip-path: inset(0 0 60% 0);
+    transform: translate(-2px, -1px);
+    opacity: 0.8;
+    animation: u-glitch-slice 0.35s steps(2, jump-none);
+    pointer-events: none;
+  }
+
+  @keyframes u-glitch {
+    0% {
+      transform: translate(0, 0);
+    }
+    20% {
+      transform: translate(-1px, 1px);
+    }
+    40% {
+      transform: translate(1px, -1px);
+    }
+    60% {
+      transform: translate(-1px, 0);
+    }
+    100% {
+      transform: translate(0, 0);
+    }
+  }
+  @keyframes u-glitch-slice {
+    0% {
+      opacity: 0;
+    }
+    30% {
+      opacity: 0.8;
+      clip-path: inset(10% 0 70% 0);
+    }
+    60% {
+      clip-path: inset(60% 0 10% 0);
+    }
+    100% {
+      opacity: 0;
+    }
   }
 }
 

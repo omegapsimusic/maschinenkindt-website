@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { SOUNDCLOUD_URL } from "./soundcloud";
 import { BookingForm } from "./booking-form";
+import { WipeReveal } from "./wipe-reveal";
 
 const BOOKING_EMAIL = "booking@maschinenkindt.de";
 
@@ -42,10 +43,12 @@ export function Contact() {
             <span className="h-px w-10 bg-ember" />
             Transmission 05 — Booking
           </p>
-          <h2 className="font-display font-semibold mb-8 text-[clamp(2.4rem,6vw,5rem)] leading-[0.9] text-bone">
-            Ruf die<br />
-            <span className="text-ember/90">Maschine.</span>
-          </h2>
+          <WipeReveal>
+            <h2 className="font-display font-semibold mb-8 text-[clamp(2.4rem,6vw,5rem)] leading-[0.9] text-bone">
+              Ruf die<br />
+              <span className="text-ember/90">Maschine.</span>
+            </h2>
+          </WipeReveal>
           <p className="mb-10 max-w-md font-tech text-base font-light leading-relaxed text-bone/75">
             Für Bookings, Kollaborationen und Presse. Sende die Koordinaten
             deiner Nacht — Datum, Ort, Rahmen. Es wird geantwortet.

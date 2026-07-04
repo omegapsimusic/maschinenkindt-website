@@ -60,7 +60,10 @@ export function Nav() {
                   <span className="font-mono text-[0.6rem] text-ember">
                     {l.index}
                   </span>
-                  <span className="font-tech text-sm uppercase tracking-[0.18em]">
+                  <span
+                    data-text={l.label}
+                    className="u-glitch-hover font-tech text-sm uppercase tracking-[0.18em]"
+                  >
                     {l.label}
                   </span>
                 </a>

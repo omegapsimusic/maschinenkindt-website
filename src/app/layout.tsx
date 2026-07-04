@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Teko, Chakra_Petch, Space_Mono } from "next/font/google";
 import "./globals.css";
 import { SmoothScroll } from "@/components/site/smooth-scroll";
+import { Cursor } from "@/components/site/cursor";
+import { Intro } from "@/components/site/intro";
 
 const teko = Teko({
   weight: ["500", "600", "700"],
@@ -51,7 +53,9 @@ export default function RootLayout({
       lang="de"
       className={`${teko.variable} ${chakra.variable} ${spaceMono.variable}`}
     >
-      <body className="u-grain min-h-dvh antialiased">
+      <body className="u-grain u-vignette-global min-h-dvh antialiased">
+        <Intro />
+        <Cursor />
         <SmoothScroll>{children}</SmoothScroll>
       </body>
     </html>

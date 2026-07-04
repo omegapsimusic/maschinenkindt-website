@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
-import { Sigil } from "./sigil";
+import { motion, useMotionValue, useTransform } from "framer-motion";
+import Image from "next/image";
 
 const SPEC = [
   ["EST.", "2019"],
@@ -14,6 +14,21 @@ const SPEC = [
 export function Hero() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoReady, setVideoReady] = useState(false);
+
+  // Parallax driven by a plain scroll listener rather than framer-motion's
+  // useScroll({ target }) — that hook, even when unused downstream, stalls
+  // the stagger animation for every motion child in this tree (repro'd:
+  // removing just this one hook call restores the intro animation).
+  const scrollPx = useMotionValue(0);
+  useEffect(() => {
+    const onScroll = () => scrollPx.set(window.scrollY);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [scrollPx]);
+  const tribalY = useTransform(scrollPx, [0, 800], [0, 70]);
+  const wordmarkY = useTransform(scrollPx, [0, 800], [0, 160]);
+  const wordmarkOpacity = useTransform(scrollPx, [0, 650], [1, 0]);
 
   // Lazy-attach the video source only once the hero is near the viewport.
   // Combined with preload="none" this keeps the initial load lean; the
@@ -96,14 +111,23 @@ export function Hero() {
         <div aria-hidden className="absolute inset-0 u-vignette" />
       </div>
 
-      {/* ghost sigil drifting behind the wordmark */}
-      <div
+      {/* tribal mark — large, darkened ambient background element, above the
+          video's dark overlay so it actually reads instead of being crushed */}
+      <motion.div
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[min(78vw,720px)] w-[min(78vw,720px)] -translate-x-1/2 -translate-y-1/2 text-bone/[0.07] motion-safe:animate-[spin_90s_linear_infinite]"
+        style={{ y: tribalY }}
+        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[min(150vw,1400px)] w-[min(150vw,1400px)] -translate-x-1/2 -translate-y-1/2 opacity-[0.2] mix-blend-screen"
       >
-        <Sigil className="h-full w-full" strokeWidth={0.8} />
-      </div>
+        <Image
+          src="/textures/hero-tribal.png"
+          alt=""
+          fill
+          priority
+          className="object-contain"
+        />
+      </motion.div>
 
+      <h1 className="sr-only">Maschinenkindt</h1>
       <motion.div
         variants={container}
         initial="hidden"
@@ -122,12 +146,20 @@ export function Hero() {
           Transmission aktiv
         </motion.p>
 
-        <motion.h1
+        <motion.div
           variants={rise}
-          className="font-display font-bold u-ember-glow max-w-[16ch] text-[clamp(3.2rem,13vw,12rem)] leading-[0.82] tracking-tight text-bone"
+          style={{ y: wordmarkY, opacity: wordmarkOpacity }}
+          className="w-full max-w-[92vw] sm:max-w-[42rem] md:max-w-[56rem] lg:max-w-[66rem]"
         >
-          Maschinen&shy;kindt
-        </motion.h1>
+          <Image
+            src="/logo/hero-wordmark.png"
+            alt="Maschinenkindt"
+            width={3000}
+            height={1000}
+            priority
+            className="h-auto w-full drop-shadow-[0_0_50px_rgba(255,60,23,0.35)]"
+          />
+        </motion.div>
 
         <motion.p
           variants={rise}
@@ -152,7 +184,8 @@ export function Hero() {
           </a>
           <a
             href="#booking"
-            className="inline-flex items-center justify-center gap-3 border border-bone/25 px-8 py-4 font-tech text-sm font-semibold uppercase tracking-[0.16em] text-bone transition-colors duration-200 hover:border-ember hover:text-ember"
+            data-text="Booking anfragen"
+            className="u-glitch-hover inline-flex items-center justify-center gap-3 border border-bone/25 px-8 py-4 font-tech text-sm font-semibold uppercase tracking-[0.16em] text-bone transition-colors duration-200 hover:border-ember hover:text-ember"
           >
             Booking anfragen
           </a>

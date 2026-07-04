@@ -7,6 +7,7 @@ import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import * as THREE from "three";
 import { mesh } from "topojson-client";
 import type { GeometryObject, Topology } from "topojson-specification";
+import { WipeReveal } from "./wipe-reveal";
 
 type Gig = {
   id: string;
@@ -317,10 +318,12 @@ export function GigGlobe() {
             <span className="h-px w-10 bg-ember" />
             Route 04 — Tourdaten
           </p>
-          <h2 className="font-display font-semibold mb-8 text-[clamp(2.4rem,6vw,5rem)] leading-[0.9] text-bone">
-            Wo die<br />
-            <span className="text-ember/90">Maschine landet.</span>
-          </h2>
+          <WipeReveal>
+            <h2 className="font-display font-semibold mb-8 text-[clamp(2.4rem,6vw,5rem)] leading-[0.9] text-bone">
+              Wo die<br />
+              <span className="text-ember/90">Maschine landet.</span>
+            </h2>
+          </WipeReveal>
           <p className="mb-10 max-w-md font-tech text-base font-light leading-relaxed text-bone/75">
             Signale auf dem Globus. Ziehen zum Drehen, anklicken für Datum und
             Location.

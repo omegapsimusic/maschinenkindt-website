@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Sigil } from "./sigil";
+import { WipeReveal } from "./wipe-reveal";
 import type { Release } from "@/app/api/discography/route";
 
 const TYPE_LABEL: Record<Release["albumType"], string> = {
@@ -13,7 +14,7 @@ const TYPE_LABEL: Record<Release["albumType"], string> = {
 
 export function Music() {
   const [releases, setReleases] = useState<Release[] | null>(null);
-  const [source, setSource] = useState<"spotify" | "mock" | null>(null);
+  const [source, setSource] = useState<"spotify" | "spotify-stale" | "mock" | null>(null);
   const [error, setError] = useState(false);
 
   useEffect(() => {
@@ -23,7 +24,7 @@ export function Music() {
         if (!r.ok) throw new Error(String(r.status));
         return r.json();
       })
-      .then((data: { releases: Release[]; source: "spotify" | "mock" }) => {
+      .then((data: { releases: Release[]; source: "spotify" | "spotify-stale" | "mock" }) => {
         if (!alive) return;
         setReleases(data.releases);
         setSource(data.source);
@@ -46,13 +47,22 @@ export function Music() {
               <span className="h-px w-10 bg-ember" />
               Archiv 02 — Diskographie
             </p>
-            <h2 className="font-display font-semibold text-[clamp(2.4rem,6vw,5rem)] leading-[0.9] text-bone">
-              Katalog der<br />
-              <span className="text-ember/90">Maschinen</span>
-            </h2>
+            <WipeReveal>
+              <h2 className="font-display font-semibold text-[clamp(2.4rem,6vw,5rem)] leading-[0.9] text-bone">
+                Katalog der<br />
+                <span className="text-ember/90">Maschinen</span>
+              </h2>
+            </WipeReveal>
           </div>
           <p className="max-w-sm font-mono text-xs leading-relaxed text-steel">
-            QUELLE: {source === "mock" ? "FALLBACK (MOCK)" : source === "spotify" ? "SPOTIFY LIVE" : "…"}
+            QUELLE:{" "}
+            {source === "mock"
+              ? "FALLBACK (MOCK)"
+              : source === "spotify-stale"
+                ? "SPOTIFY (CACHE)"
+                : source === "spotify"
+                  ? "SPOTIFY LIVE"
+                  : "…"}
             <br />
             Alle Tonträger von Maschinenkindt, chronologisch absteigend.
           </p>

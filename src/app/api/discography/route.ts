@@ -28,6 +28,10 @@ const API_BASE = "https://api.spotify.com/v1"
 let tokenCache: { token: string; expiresAt: number } | null = null
 let artistIdCache: string | null = null
 let albumsCache: { releases: Release[]; expiresAt: number } | null = null
+// Last successful fetch, kept indefinitely (no expiry) so a transient
+// Spotify outage or rate-limit degrades to slightly-stale real data instead
+// of jumping straight to mock placeholders.
+let lastGoodCache: Release[] | null = null
 
 const ALBUMS_TTL_MS = 10 * 60 * 1000 // 10 minutes
 
@@ -108,6 +112,29 @@ interface SpotifyAlbum {
   external_urls: { spotify: string }
 }
 
+// Spotify enforces its own rate limit and replies 429 with a Retry-After
+// header. A single short wait-and-retry is enough to ride out the bursts
+// this endpoint sees in practice (a handful of concurrent cold starts);
+// anything past that surfaces as a real failure.
+async function fetchWithRetry(
+  url: string,
+  token: string
+): Promise<Response> {
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  })
+  if (res.status === 429) {
+    const retryAfterSec = Number(res.headers.get("Retry-After")) || 1
+    await new Promise((r) => setTimeout(r, Math.min(retryAfterSec, 5) * 1000))
+    return fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    })
+  }
+  return res
+}
+
 async function fetchAllAlbums(
   token: string,
   artistId: string
@@ -124,10 +151,7 @@ async function fetchAllAlbums(
 
   // Follow pagination, capped so a runaway `next` chain can't loop forever.
   for (let page = 0; page < 10 && url; page++) {
-    const res: Response = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}` },
-      cache: "no-store",
-    })
+    const res: Response = await fetchWithRetry(url, token)
     if (!res.ok) {
       throw new Error(`Spotify albums request failed: ${res.status}`)
     }
@@ -203,13 +227,29 @@ export async function GET() {
     )
 
     albumsCache = { releases, expiresAt: Date.now() + ALBUMS_TTL_MS }
+    lastGoodCache = releases
 
     return Response.json(
       { source: "spotify", count: releases.length, releases },
       { headers: { "Cache-Control": "no-store" } }
     )
   } catch (err) {
-    console.error("[discography] falling back to mock data:", err)
+    console.error("[discography] Spotify fetch failed:", err)
+
+    if (lastGoodCache) {
+      console.error("[discography] serving last known-good Spotify data")
+      return Response.json(
+        {
+          source: "spotify-stale",
+          count: lastGoodCache.length,
+          releases: lastGoodCache,
+          error: err instanceof Error ? err.message : "unknown error",
+        },
+        { headers: { "Cache-Control": "no-store" } }
+      )
+    }
+
+    console.error("[discography] no cached data available, falling back to mock")
     const releases = getMockReleases().sort((a, b) =>
       b.releaseDate.localeCompare(a.releaseDate)
     )
