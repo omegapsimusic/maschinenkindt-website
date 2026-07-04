@@ -80,6 +80,71 @@ function useCountryBorderGeometry(radius: number) {
   }, [topology, radius]);
 }
 
+// Bakes a logo PNG into an equirectangular (2:1) canvas texture, confined to
+// a band around the equator. Nothing is ever drawn near the top/bottom rows
+// (the poles), so the projection's inherent pole-stretching never touches it.
+function useEquirectLogoTexture(
+  src: string,
+  opts: { widthFrac: number; feather?: boolean }
+) {
+  const [texture, setTexture] = useState<THREE.CanvasTexture | null>(null);
+  const { widthFrac, feather } = opts;
+
+  useEffect(() => {
+    let alive = true;
+    const img = new Image();
+    img.onload = () => {
+      if (!alive) return;
+      const W = 2048;
+      const H = 1024;
+      const canvas = document.createElement("canvas");
+      canvas.width = W;
+      canvas.height = H;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      const drawW = W * widthFrac;
+      const drawH = drawW * (img.height / img.width);
+      const x = (W - drawW) / 2;
+      const y = (H - drawH) / 2;
+
+      if (feather) {
+        const patch = document.createElement("canvas");
+        patch.width = drawW;
+        patch.height = drawH;
+        const pctx = patch.getContext("2d");
+        if (pctx) {
+          pctx.drawImage(img, 0, 0, drawW, drawH);
+          pctx.globalCompositeOperation = "destination-in";
+          const grad = pctx.createRadialGradient(
+            drawW / 2, drawH / 2, 0,
+            drawW / 2, drawH / 2, Math.max(drawW, drawH) * 0.6
+          );
+          grad.addColorStop(0, "rgba(0,0,0,1)");
+          grad.addColorStop(0.7, "rgba(0,0,0,1)");
+          grad.addColorStop(1, "rgba(0,0,0,0)");
+          pctx.fillStyle = grad;
+          pctx.fillRect(0, 0, drawW, drawH);
+          ctx.drawImage(patch, x, y);
+        }
+      } else {
+        ctx.drawImage(img, x, y, drawW, drawH);
+      }
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.needsUpdate = true;
+      setTexture(tex);
+    };
+    img.src = src;
+    return () => {
+      alive = false;
+    };
+  }, [src, widthFrac, feather]);
+
+  return texture;
+}
+
 function formatDate(iso: string) {
   return new Date(`${iso}T00:00:00`).toLocaleDateString("de-DE", {
     day: "2-digit",
@@ -103,6 +168,13 @@ function GlobeScene({
     []
   );
   const borderGeometry = useCountryBorderGeometry(RADIUS * 1.003);
+  const wordmarkTexture = useEquirectLogoTexture("/textures/wordmark.png", {
+    widthFrac: 0.17,
+  });
+  const tribalTexture = useEquirectLogoTexture("/textures/tribal-glow.png", {
+    widthFrac: 0.48,
+    feather: true,
+  });
 
   // When a marker is selected, glide the camera around to face it instead of
   // just freezing auto-rotate wherever it happened to be — otherwise the
@@ -140,6 +212,35 @@ function GlobeScene({
         <lineSegments geometry={borderGeometry}>
           <lineBasicMaterial color="#e7e3d8" transparent opacity={0.4} />
         </lineSegments>
+      )}
+
+      {/* Maschinenkindt wordmark, wrapped as a real spherical band around the
+          equator — printed on the surface, not a flat decal */}
+      {wordmarkTexture && (
+        <mesh rotation={[0, 0, 0]}>
+          <sphereGeometry args={[RADIUS * 1.01, 48, 48]} />
+          <meshBasicMaterial
+            map={wordmarkTexture}
+            transparent
+            opacity={0.9}
+            depthWrite={false}
+          />
+        </mesh>
+      )}
+
+      {/* tribal mark, additive-blended and feathered so it reads as an
+          ambient glow/pattern woven into the surface, not a sticker */}
+      {tribalTexture && (
+        <mesh rotation={[0, Math.PI * 0.85, 0]}>
+          <sphereGeometry args={[RADIUS * 1.014, 48, 48]} />
+          <meshBasicMaterial
+            map={tribalTexture}
+            transparent
+            opacity={0.14}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
+        </mesh>
       )}
 
       {/* rim glow shell */}
