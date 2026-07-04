@@ -116,9 +116,9 @@ export function Hero() {
         >
           <span className="inline-block h-1.5 w-1.5 bg-ember motion-safe:animate-pulse" />
           Hardtechno
-          <span className="text-steel">//</span>
+          <span className="text-steel">{"//"}</span>
           Rituelle Maschinenmusik
-          <span className="text-steel">//</span>
+          <span className="text-steel">{"//"}</span>
           Transmission aktiv
         </motion.p>
 

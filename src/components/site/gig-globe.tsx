@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Canvas, type ThreeEvent } from "@react-three/fiber";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { OrbitControls, Html, Stars } from "@react-three/drei";
+import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import * as THREE from "three";
 import { mesh } from "topojson-client";
 import type { GeometryObject, Topology } from "topojson-specification";
@@ -90,15 +91,35 @@ function formatDate(iso: string) {
 function GlobeScene({
   selected,
   onSelect,
+  controlsRef,
 }: {
   selected: string | null;
   onSelect: (id: string | null) => void;
+  controlsRef: React.RefObject<OrbitControlsImpl | null>;
 }) {
+  const { camera } = useThree();
   const markers = useMemo(
     () => GIGS.map((g) => ({ ...g, pos: latLonToVec3(g.lat, g.lon, RADIUS * 1.01) })),
     []
   );
   const borderGeometry = useCountryBorderGeometry(RADIUS * 1.003);
+
+  // When a marker is selected, glide the camera around to face it instead of
+  // just freezing auto-rotate wherever it happened to be — otherwise the
+  // selected city can end up on the far side of the globe, off-screen.
+  const flyTarget = useRef<THREE.Vector3 | null>(null);
+  useEffect(() => {
+    const marker = selected && markers.find((m) => m.id === selected);
+    flyTarget.current = marker
+      ? marker.pos.clone().normalize().multiplyScalar(camera.position.length())
+      : null;
+  }, [selected, markers, camera]);
+
+  useFrame(() => {
+    if (!flyTarget.current) return;
+    camera.position.lerp(flyTarget.current, 0.08);
+    controlsRef.current?.update();
+  });
 
   return (
     <group>
@@ -155,8 +176,8 @@ function GlobeScene({
             </mesh>
 
             {isSelected && (
-              <Html distanceFactor={7} center style={{ pointerEvents: "none" }}>
-                <div className="pointer-events-auto w-56 -translate-y-20 border border-ember/40 bg-[#0d1017]/95 p-4 backdrop-blur-sm">
+              <Html distanceFactor={4} center style={{ pointerEvents: "none" }}>
+                <div className="pointer-events-auto w-56 max-w-[80vw] -translate-y-20 border border-ember/40 bg-[#0d1017]/95 p-4 backdrop-blur-sm">
                   <p className="u-label text-[0.55rem] text-ember">{g.country}</p>
                   <p className="font-display font-semibold text-xl leading-none text-bone">
                     {g.city}
@@ -182,6 +203,7 @@ function GlobeScene({
 
 export function GigGlobe() {
   const [selected, setSelected] = useState<string | null>(null);
+  const controlsRef = useRef<OrbitControlsImpl | null>(null);
 
   return (
     <section
@@ -235,14 +257,19 @@ export function GigGlobe() {
               <pointLight position={[4, 3, 5]} intensity={40} color="#ff5a33" />
               <pointLight position={[-4, -2, -5]} intensity={10} color="#767c88" />
               <Stars radius={40} depth={20} count={1200} factor={2} fade speed={0.4} />
-              <GlobeScene selected={selected} onSelect={setSelected} />
+              <GlobeScene
+                selected={selected}
+                onSelect={setSelected}
+                controlsRef={controlsRef}
+              />
               <OrbitControls
+                ref={controlsRef}
                 enablePan={false}
                 enableZoom={false}
                 autoRotate={!selected}
                 autoRotateSpeed={0.6}
-                minPolarAngle={Math.PI / 3}
-                maxPolarAngle={(Math.PI * 2) / 3}
+                minPolarAngle={Math.PI / 6}
+                maxPolarAngle={(Math.PI * 5) / 6}
               />
             </Canvas>
           </div>

@@ -7,7 +7,33 @@
       "mcp__playwright__browser_wait_for",
       "mcp__playwright__browser_close",
       "mcp__playwright__browser_resize",
-      "mcp__playwright__browser_console_messages"
+      "mcp__playwright__browser_console_messages",
+      "Edit",
+      "Write",
+      "Bash(npm run *)",
+      "Bash(npm install *)",
+      "Bash(npx *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push*)",
+      "Bash(git status*)",
+      "Bash(git log*)",
+      "Bash(git diff*)",
+      "Bash(ls*)",
+      "Bash(find*)",
+      "Bash(cat*)",
+      "Bash(mkdir*)",
+      "Bash(cp*)",
+      "Bash(rm -f*)",
+      "Bash(node -e*)",
+      "Bash(python3*)",
+      "Bash(pip3 install*)",
+      "Bash(vercel --prod*)",
+      "playwright"
+    ],
+    "ask": [
+      "Bash(rm -rf*)",
+      "Bash(vercel env*)"
     ]
   }
 }
