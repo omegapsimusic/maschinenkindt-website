@@ -5,6 +5,9 @@ import { motion } from "framer-motion";
 import Script from "next/script";
 import { WipeReveal } from "./wipe-reveal";
 import { usePlayerVisualizer } from "./player-visualizer-context";
+import { TribalVisualizerOverlay } from "./tribal-visualizer";
+
+const SOURCE_ID = "soundcloud";
 
 // Profile URL (not a single track) — the widget below renders it as a
 // compact, natively-clickable track list, so new SoundCloud uploads show up
@@ -44,9 +47,9 @@ export function SoundCloud() {
       clearInterval(poll);
       const widget = window.SC.Widget(iframe);
       const stop = () => widget.pause();
-      widget.bind(window.SC.Widget.Events.PLAY, () => reportPlaying(true, stop));
-      widget.bind(window.SC.Widget.Events.PAUSE, () => reportPlaying(false, stop));
-      widget.bind(window.SC.Widget.Events.FINISH, () => reportPlaying(false, stop));
+      widget.bind(window.SC.Widget.Events.PLAY, () => reportPlaying(SOURCE_ID, true, stop));
+      widget.bind(window.SC.Widget.Events.PAUSE, () => reportPlaying(SOURCE_ID, false, stop));
+      widget.bind(window.SC.Widget.Events.FINISH, () => reportPlaying(SOURCE_ID, false, stop));
     };
 
     iframe.addEventListener("load", tryAttach);
@@ -97,6 +100,7 @@ export function SoundCloud() {
             aria-hidden
             className="pointer-events-none absolute inset-0 z-10 border border-[#e73a3a]/15"
           />
+          <TribalVisualizerOverlay id={SOURCE_ID} />
           <iframe
             ref={iframeRef}
             title="Maschinenkindt — SoundCloud Player"

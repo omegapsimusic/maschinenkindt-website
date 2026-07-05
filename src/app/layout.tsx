@@ -5,7 +5,6 @@ import "./globals.css";
 import { SmoothScroll } from "@/components/site/smooth-scroll";
 import { Intro } from "@/components/site/intro";
 import { PlayerVisualizerProvider } from "@/components/site/player-visualizer-context";
-import { TribalVisualizer } from "@/components/site/tribal-visualizer";
 
 const teko = Teko({
   weight: ["500", "600", "700"],
@@ -60,7 +59,6 @@ export default function RootLayout({
         <PlayerVisualizerProvider>
           <Intro />
           <SmoothScroll>{children}</SmoothScroll>
-          <TribalVisualizer />
         </PlayerVisualizerProvider>
       </body>
     </html>

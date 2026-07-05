@@ -287,65 +287,12 @@ function GlobeScene({
 export function GigGlobe() {
   const [selected, setSelected] = useState<string | null>(null);
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [videoReady, setVideoReady] = useState(false);
-
-  // Same lazy-attach pattern as the hero video — only fetch it once this
-  // section nears the viewport, so it doesn't cost anything for visitors
-  // who never scroll this far.
-  useEffect(() => {
-    const el = videoRef.current;
-    if (!el) return;
-
-    const attach = () => {
-      if (el.dataset.loaded) return;
-      const src = el.dataset.src;
-      if (!src) return;
-      el.src = src;
-      el.dataset.loaded = "1";
-      el.load();
-      el.play().catch(() => {
-        /* autoplay may be blocked — the section still works without it */
-      });
-    };
-
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          attach();
-          io.disconnect();
-        }
-      },
-      { rootMargin: "200px" }
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
 
   return (
     <section
       id="tour"
       className="relative isolate overflow-hidden border-t border-[var(--hairline)] py-28 md:py-40"
     >
-      {/* atmospheric video loop, low-opacity — sets a mood behind the globe
-          without competing with it for attention */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-        <video
-          ref={videoRef}
-          data-src="/videos/hero.mp4"
-          preload="none"
-          muted
-          loop
-          playsInline
-          autoPlay
-          onPlaying={() => setVideoReady(true)}
-          className={`h-full w-full object-cover transition-opacity duration-1000 ${
-            videoReady ? "opacity-[0.14]" : "opacity-0"
-          }`}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-void via-transparent to-void" />
-      </div>
-
       <div className="mx-auto grid max-w-[110rem] gap-16 px-5 md:grid-cols-12 md:px-14">
         <div className="md:col-span-5">
           <p className="u-label mb-6 flex items-center gap-3">

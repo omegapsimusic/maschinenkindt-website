@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Sigil } from "./sigil";
 import { WipeReveal } from "./wipe-reveal";
 import { usePlayerVisualizer } from "./player-visualizer-context";
+import { TribalVisualizerOverlay } from "./tribal-visualizer";
 import { onSpotifyIframeApiReady, type SpotifyEmbedController } from "@/lib/spotify-iframe-api";
 import type { Release } from "@/app/api/discography/route";
 
@@ -78,7 +79,7 @@ export function Music() {
             <p className="u-label mt-2">ERR // DISCOGRAPHY_FETCH</p>
           </div>
         ) : (
-          <ul className="grid grid-cols-1 items-start gap-px border border-[var(--hairline)] bg-[var(--hairline)] sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid grid-cols-1 gap-px border border-[var(--hairline)] bg-[var(--hairline)] sm:grid-cols-2 lg:grid-cols-3">
             {(releases ?? Array.from({ length: 6 }).map(() => null)).map(
               (rel, i) => (
                 <MusicCard key={rel?.id ?? i} release={rel} index={i} />
@@ -98,59 +99,61 @@ function MusicCard({
   release: Release | null;
   index: number;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const [playing, setPlaying] = useState(false);
   const embedRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<SpotifyEmbedController | null>(null);
   const stopRef = useRef<(() => void) | null>(null);
   const { reportPlaying } = usePlayerVisualizer();
+  const sourceId = `spotify-${release?.id ?? index}`;
 
-  // Mount the real Spotify embed only once the user asks for it — keeps the
-  // card exactly as before until then. Controlled via the IFrame API (not a
-  // plain <iframe src>) so we can hear playback_update events and feed the
-  // shared tribal visualizer / single-active-player enforcement.
-  //
-  // Deliberately does NOT call controller.play() itself: that call lands
-  // asynchronously (after the API script + postMessage handshake), by which
-  // point the browser no longer treats it as tied to the click that opened
-  // the card, so autoplay gets silently blocked — the embed shows but never
-  // makes sound. Instead we just mount the controller and let the user press
-  // its own visible play button, which is a first-party gesture Spotify
-  // always honors.
+  // Report "stopped" if this card unmounts while it was the active source
+  // (e.g. the list re-renders), so the shared state doesn't keep thinking
+  // something is still playing after the controller is gone.
   useEffect(() => {
-    if (!expanded || !release || !embedRef.current) return;
-    const container = embedRef.current;
-    let cancelled = false;
-
-    onSpotifyIframeApiReady((api) => {
-      if (cancelled || !container) return;
-      api.createController(
-        container,
-        { uri: `spotify:album:${release.id}`, width: "100%", height: "152" },
-        (controller) => {
-          if (cancelled) return;
-          controllerRef.current = controller;
-          const stop = () => controller.pause();
-          stopRef.current = stop;
-          controller.addListener("playback_update", (e) => {
-            reportPlaying(!e.data.isPaused, stop);
-          });
-        }
-      );
-    });
-
     return () => {
-      cancelled = true;
-      controllerRef.current = null;
-      // Closing the card ends this source's turn — tell the shared
-      // visualizer/mutual-exclusion state so it doesn't keep thinking we're
-      // playing once the iframe is gone.
       if (stopRef.current) {
-        reportPlaying(false, stopRef.current);
-        stopRef.current = null;
+        reportPlaying(sourceId, false, stopRef.current);
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [expanded]);
+  }, []);
+
+  const handleTogglePlay = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!release) return;
+
+    const controller = controllerRef.current;
+    if (controller) {
+      if (playing) controller.pause();
+      else controller.play();
+      return;
+    }
+
+    // First click: create the (invisible) embed and start playback
+    // straight away — this is a genuine click handler, so Spotify's own
+    // IFrame API honors it as a real play request, no visible player UI
+    // required for a 30s preview.
+    const container = embedRef.current;
+    if (!container) return;
+    onSpotifyIframeApiReady((api) => {
+      if (controllerRef.current) return;
+      api.createController(
+        container,
+        { uri: `spotify:album:${release.id}`, width: "300", height: "152" },
+        (ctrl) => {
+          controllerRef.current = ctrl;
+          const stop = () => ctrl.pause();
+          stopRef.current = stop;
+          ctrl.addListener("playback_update", (ev) => {
+            setPlaying(!ev.data.isPaused);
+            reportPlaying(sourceId, !ev.data.isPaused, stop);
+          });
+          ctrl.play();
+        }
+      );
+    });
+  };
 
   // Skeleton state while the discography is loading.
   if (!release) {
@@ -209,24 +212,23 @@ function MusicCard({
               />
             </div>
           )}
+
+          <TribalVisualizerOverlay id={sourceId} />
+
           <span className="absolute bottom-0 left-0 right-0 flex translate-y-full items-center justify-center gap-2 bg-ember py-2.5 font-tech text-xs font-semibold uppercase tracking-[0.18em] text-void transition-transform duration-300 group-hover:translate-y-0">
             ▶ Auf Spotify hören
           </span>
 
-          {/* inline play control — reveals the real Spotify embed below the
-              card without leaving the page or requiring a Spotify login */}
+          {/* inline play control — plays the real 30s Spotify preview
+              directly, no visible player UI */}
           <button
             type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setExpanded((v) => !v);
-            }}
-            aria-label={expanded ? "Player schließen" : "Vorschau abspielen"}
-            aria-expanded={expanded}
-            className="absolute right-2 top-2 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-bone/25 bg-void/80 text-bone backdrop-blur-sm transition-colors hover:border-ember hover:text-ember"
+            onClick={handleTogglePlay}
+            aria-label={playing ? "Pause" : "Vorschau abspielen"}
+            aria-pressed={playing}
+            className="absolute right-2 top-2 z-30 flex h-9 w-9 items-center justify-center rounded-full border border-bone/25 bg-void/80 text-bone backdrop-blur-sm transition-colors hover:border-ember hover:text-ember"
           >
-            <span className="font-tech text-sm leading-none">{expanded ? "✕" : "▶"}</span>
+            <span className="font-tech text-sm leading-none">{playing ? "❚❚" : "▶"}</span>
           </button>
         </div>
 
@@ -245,11 +247,15 @@ function MusicCard({
         </dl>
       </a>
 
-      {expanded && (
-        <div className="mt-4 overflow-hidden rounded-sm" onClick={(e) => e.stopPropagation()}>
-          <div ref={embedRef} />
-        </div>
-      )}
+      {/* real Spotify player, invisible but on-screen — only its audio and
+          playback_update events are used, no visible UI. Positioning this
+          far off-screen (e.g. left:-9999px) makes Chrome treat it as a
+          "distant iframe" and defer loading it indefinitely, so it must
+          stay within the actual viewport bounds; opacity+pointer-events
+          hide it instead. */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 opacity-0">
+        <div ref={embedRef} className="h-full w-full" />
+      </div>
     </motion.li>
   );
 }

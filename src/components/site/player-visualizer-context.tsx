@@ -5,28 +5,32 @@ import { createContext, useCallback, useContext, useMemo, useRef, useState } fro
 type StopFn = () => void;
 
 type Ctx = {
-  /** Is a track playing right now? Drives the visualizer's visibility —
-   *  it closes fully back to its initial (hidden) state as soon as this
-   *  goes false, rather than lingering on screen. */
+  /** Which source is currently the active one (e.g. "spotify-<id>" or
+   *  "soundcloud"), or null if nothing has ever played. Each source's own
+   *  visualizer overlay shows itself only when `activeId === its own id`. */
+  activeId: string | null;
+  /** Is the active source playing right now? */
   playing: boolean;
   /** Called by a player source whenever its own play/pause state changes.
    *  `stop` pauses that specific source — used to enforce "only one thing
    *  plays at a time" when a second source starts. */
-  reportPlaying: (isPlaying: boolean, stop: StopFn) => void;
+  reportPlaying: (id: string, isPlaying: boolean, stop: StopFn) => void;
 };
 
 const PlayerVisualizerContext = createContext<Ctx | null>(null);
 
 export function PlayerVisualizerProvider({ children }: { children: React.ReactNode }) {
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
   const activeStopRef = useRef<StopFn | null>(null);
 
-  const reportPlaying = useCallback((isPlaying: boolean, stop: StopFn) => {
+  const reportPlaying = useCallback((id: string, isPlaying: boolean, stop: StopFn) => {
     if (isPlaying) {
       if (activeStopRef.current && activeStopRef.current !== stop) {
         activeStopRef.current();
       }
       activeStopRef.current = stop;
+      setActiveId(id);
       setPlaying(true);
     } else if (activeStopRef.current === stop) {
       activeStopRef.current = null;
@@ -35,8 +39,8 @@ export function PlayerVisualizerProvider({ children }: { children: React.ReactNo
   }, []);
 
   const value = useMemo(
-    () => ({ playing, reportPlaying }),
-    [playing, reportPlaying]
+    () => ({ activeId, playing, reportPlaying }),
+    [activeId, playing, reportPlaying]
   );
 
   return (

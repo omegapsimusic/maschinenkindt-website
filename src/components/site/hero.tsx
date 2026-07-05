@@ -26,7 +26,6 @@ export function Hero() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, [scrollPx]);
-  const tribalY = useTransform(scrollPx, [0, 800], [0, 70]);
   const wordmarkY = useTransform(scrollPx, [0, 800], [0, 160]);
   const wordmarkOpacity = useTransform(scrollPx, [0, 650], [1, 0]);
 
@@ -110,39 +109,6 @@ export function Hero() {
         />
         <div aria-hidden className="absolute inset-0 u-vignette" />
       </div>
-
-      {/* tribal mark — large, darkened ambient background element, above the
-          video's dark overlay so it actually reads instead of being crushed.
-          (Root cause of it being fully invisible before: the section had
-          position:relative but no stacking-context-establishing property,
-          so this -z-10 layer escaped to the document root's stacking
-          context and rendered behind the opaque body background entirely.
-          `isolate` on the section fixes that.) Plain opacity, not
-          mix-blend-screen — screen blend washed out unpredictably against
-          the moving video content underneath. A soft red bloom (matching
-          the wordmark's u-ember-glow treatment) helps the thin line-work
-          read clearly at a low, "darkened" opacity. */}
-      <motion.div
-        aria-hidden
-        style={{ y: tribalY }}
-        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[min(170vw,1600px)] w-[min(170vw,1600px)] -translate-x-1/2 -translate-y-1/2 opacity-[0.22]"
-      >
-        <Image
-          src="/textures/hero-tribal.png"
-          alt=""
-          fill
-          priority
-          className="object-contain"
-          style={{
-            // Tailwind's drop-shadow-[...] utility can't be stacked — each
-            // one just overwrites the filter property instead of chaining,
-            // so multiple drop-shadow-[...] classes silently dropped all but
-            // the last. Set the combined multi-layer glow directly instead.
-            filter:
-              "drop-shadow(0 0 10px rgba(231,58,58,0.5)) drop-shadow(0 0 30px rgba(231,58,58,0.3))",
-          }}
-        />
-      </motion.div>
 
       <h1 className="sr-only">Maschinenkindt</h1>
       <motion.div
