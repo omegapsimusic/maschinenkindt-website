@@ -6,11 +6,25 @@ import Image from "next/image";
 import { usePlayerVisualizer } from "./player-visualizer-context";
 
 const BARS_PER_SIDE = 5;
-const REST_HEIGHT = 3;
+const REST_HEIGHT = 4;
 const TICK_MS = 150;
 // How long the settled (static logo, flat bars) state holds before the
 // overlay fades out — long enough to read as an intentional wind-down.
 const HIDE_DELAY_MS = 600;
+
+// Solid black stroke around the bars/logo so they read against a cover of
+// any brightness — built from 8 offset zero-blur drop-shadows (a duplicated
+// silhouette in every direction), not a single soft shadow, so it reads as
+// a hard outline rather than a glow.
+const BLACK_STROKE = [-1.5, 0, 1.5].flatMap((dx) =>
+  [-1.5, 0, 1.5]
+    .filter((dy) => dx !== 0 || dy !== 0)
+    .map((dy) => `drop-shadow(${dx}px ${dy}px 0 rgba(0,0,0,0.95))`)
+).join(" ");
+
+const LOGO_FILTER = `${BLACK_STROKE} drop-shadow(0 0 10px rgba(231,58,58,0.8)) drop-shadow(0 0 22px rgba(231,58,58,0.5))`;
+const BAR_BOX_SHADOW =
+  "0 0 0 1.5px rgba(0,0,0,0.95), 0 0 6px rgba(231,58,58,0.9), 0 0 14px rgba(231,58,58,0.5)";
 
 // Transparent overlay meant to sit directly on top of whichever cover/player
 // box is currently playing (place it inside a `position: relative`
@@ -61,7 +75,7 @@ export function TribalVisualizerOverlay({ id }: { id: string }) {
 
     const tick = () => {
       allBars().forEach((el) => {
-        const h = 4 + Math.random() * 18;
+        const h = 6 + Math.random() * 34;
         el.style.height = `${h}px`;
       });
     };
@@ -78,34 +92,42 @@ export function TribalVisualizerOverlay({ id }: { id: string }) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center gap-1.5"
+          className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"
         >
-          <div className="flex items-end gap-[2px]" aria-hidden>
+          {/* left bars — negative margin + lower z-index tucks their base
+              behind the logo's wingtip so they read as growing out of it */}
+          <div className="relative z-0 -mr-3 flex items-end gap-[3px]" aria-hidden>
             {Array.from({ length: BARS_PER_SIDE }).map((_, i) => (
               <div
                 key={i}
                 ref={(el) => {
                   leftRefs.current[i] = el;
                 }}
-                className="w-[2.5px] rounded-full bg-[#e73a3a] shadow-[0_0_6px_rgba(231,58,58,0.85)] transition-[height] duration-150 ease-out"
-                style={{ height: REST_HEIGHT }}
+                className="w-[3px] rounded-full bg-[#e73a3a] transition-[height] duration-150 ease-out"
+                style={{ height: REST_HEIGHT, boxShadow: BAR_BOX_SHADOW }}
               />
             ))}
           </div>
 
-          <div className="relative h-10 w-10 shrink-0 drop-shadow-[0_0_10px_rgba(231,58,58,0.7)]">
-            <Image src="/textures/hero-tribal.png" alt="" fill className="object-contain" />
+          <div className="relative z-10 h-16 w-16 shrink-0">
+            <Image
+              src="/textures/hero-tribal.png"
+              alt=""
+              fill
+              className="object-contain"
+              style={{ filter: LOGO_FILTER }}
+            />
           </div>
 
-          <div className="flex items-end gap-[2px]" aria-hidden>
+          <div className="relative z-0 -ml-3 flex items-end gap-[3px]" aria-hidden>
             {Array.from({ length: BARS_PER_SIDE }).map((_, i) => (
               <div
                 key={i}
                 ref={(el) => {
                   rightRefs.current[i] = el;
                 }}
-                className="w-[2.5px] rounded-full bg-[#e73a3a] shadow-[0_0_6px_rgba(231,58,58,0.85)] transition-[height] duration-150 ease-out"
-                style={{ height: REST_HEIGHT }}
+                className="w-[3px] rounded-full bg-[#e73a3a] transition-[height] duration-150 ease-out"
+                style={{ height: REST_HEIGHT, boxShadow: BAR_BOX_SHADOW }}
               />
             ))}
           </div>
