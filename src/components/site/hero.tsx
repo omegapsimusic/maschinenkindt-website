@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 import { motion, useMotionValue, useTransform } from "framer-motion";
 import Image from "next/image";
 
@@ -12,9 +12,6 @@ const SPEC = [
 ];
 
 export function Hero() {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [videoReady, setVideoReady] = useState(false);
-
   // Parallax driven by a plain scroll listener rather than framer-motion's
   // useScroll({ target }) — that hook, even when unused downstream, stalls
   // the stagger animation for every motion child in this tree (repro'd:
@@ -28,38 +25,6 @@ export function Hero() {
   }, [scrollPx]);
   const wordmarkY = useTransform(scrollPx, [0, 800], [0, 160]);
   const wordmarkOpacity = useTransform(scrollPx, [0, 650], [1, 0]);
-
-  // Lazy-attach the video source only once the hero is near the viewport.
-  // Combined with preload="none" this keeps the initial load lean; the
-  // poster carries the visual until the file is decoded.
-  useEffect(() => {
-    const el = videoRef.current;
-    if (!el) return;
-
-    const attach = () => {
-      if (el.dataset.loaded) return;
-      const src = el.dataset.src;
-      if (!src) return;
-      el.src = src;
-      el.dataset.loaded = "1";
-      el.load();
-      el.play().catch(() => {
-        /* autoplay may be blocked — poster remains, no error surfaced */
-      });
-    };
-
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          attach();
-          io.disconnect();
-        }
-      },
-      { rootMargin: "200px" }
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
 
   const container = {
     hidden: {},
@@ -79,37 +44,6 @@ export function Hero() {
       id="top"
       className="relative isolate flex min-h-dvh items-center overflow-hidden"
     >
-      {/* ── background video (lazy) ── */}
-      <div className="absolute inset-0 -z-10">
-        <video
-          ref={videoRef}
-          data-src="/videos/hero.mp4"
-          poster="/hero-poster.svg"
-          preload="none"
-          muted
-          loop
-          playsInline
-          autoPlay
-          onPlaying={() => setVideoReady(true)}
-          className={`h-full w-full object-cover transition-opacity duration-1000 ${
-            videoReady ? "opacity-100" : "opacity-0"
-          }`}
-        />
-        {/* poster fallback layer + cinematic treatment */}
-        <div
-          aria-hidden
-          className={`absolute inset-0 bg-[url('/hero-poster.svg')] bg-cover bg-center transition-opacity duration-1000 ${
-            videoReady ? "opacity-0" : "opacity-100"
-          }`}
-        />
-        <div aria-hidden className="absolute inset-0 u-scanlines opacity-40" />
-        <div
-          aria-hidden
-          className="absolute inset-0 bg-gradient-to-b from-void/40 via-void/30 to-void"
-        />
-        <div aria-hidden className="absolute inset-0 u-vignette" />
-      </div>
-
       <h1 className="sr-only">Maschinenkindt</h1>
       <motion.div
         variants={container}
