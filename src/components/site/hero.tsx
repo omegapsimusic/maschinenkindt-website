@@ -78,7 +78,7 @@ export function Hero() {
   return (
     <section
       id="top"
-      className="relative flex min-h-dvh items-center overflow-hidden"
+      className="relative isolate flex min-h-dvh items-center overflow-hidden"
     >
       {/* ── background video (lazy) ── */}
       <div className="absolute inset-0 -z-10">
@@ -113,12 +113,19 @@ export function Hero() {
 
       {/* tribal mark — large, darkened ambient background element, above the
           video's dark overlay so it actually reads instead of being crushed.
-          Plain opacity (not mix-blend-screen) — screen blend made it wash
-          out unpredictably against the moving video content underneath. */}
+          (Root cause of it being fully invisible before: the section had
+          position:relative but no stacking-context-establishing property,
+          so this -z-10 layer escaped to the document root's stacking
+          context and rendered behind the opaque body background entirely.
+          `isolate` on the section fixes that.) Plain opacity, not
+          mix-blend-screen — screen blend washed out unpredictably against
+          the moving video content underneath. A soft red bloom (matching
+          the wordmark's u-ember-glow treatment) helps the thin line-work
+          read clearly at a low, "darkened" opacity. */}
       <motion.div
         aria-hidden
         style={{ y: tribalY }}
-        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[min(150vw,1400px)] w-[min(150vw,1400px)] -translate-x-1/2 -translate-y-1/2 opacity-[0.22]"
+        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[min(170vw,1600px)] w-[min(170vw,1600px)] -translate-x-1/2 -translate-y-1/2 opacity-[0.22]"
       >
         <Image
           src="/textures/hero-tribal.png"
@@ -126,6 +133,14 @@ export function Hero() {
           fill
           priority
           className="object-contain"
+          style={{
+            // Tailwind's drop-shadow-[...] utility can't be stacked — each
+            // one just overwrites the filter property instead of chaining,
+            // so multiple drop-shadow-[...] classes silently dropped all but
+            // the last. Set the combined multi-layer glow directly instead.
+            filter:
+              "drop-shadow(0 0 10px rgba(231,58,58,0.5)) drop-shadow(0 0 30px rgba(231,58,58,0.3))",
+          }}
         />
       </motion.div>
 

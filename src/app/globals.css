@@ -70,21 +70,6 @@
     background: color-mix(in oklch, var(--bone) 14%, transparent);
     border: 2px solid var(--void);
   }
-  /* Custom reticle cursor takes over on fine-pointer devices — see Cursor component */
-  @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
-    body {
-      cursor: none;
-    }
-  }
-}
-
-.mk-cursor-root {
-  display: none;
-}
-@media (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .mk-cursor-root {
-    display: block;
-  }
 }
 
 @layer utilities {

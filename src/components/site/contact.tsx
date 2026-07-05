@@ -16,7 +16,7 @@ export function Contact() {
   return (
     <section
       id="booking"
-      className="relative overflow-hidden border-t border-[var(--hairline)] py-28 md:py-40"
+      className="relative isolate overflow-hidden border-t border-[var(--hairline)] py-28 md:py-40"
     >
       <div aria-hidden className="u-hazard absolute inset-x-0 top-0 h-1.5 opacity-70" />
 
