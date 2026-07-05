@@ -112,11 +112,13 @@ export function Hero() {
       </div>
 
       {/* tribal mark — large, darkened ambient background element, above the
-          video's dark overlay so it actually reads instead of being crushed */}
+          video's dark overlay so it actually reads instead of being crushed.
+          Plain opacity (not mix-blend-screen) — screen blend made it wash
+          out unpredictably against the moving video content underneath. */}
       <motion.div
         aria-hidden
         style={{ y: tribalY }}
-        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[min(150vw,1400px)] w-[min(150vw,1400px)] -translate-x-1/2 -translate-y-1/2 opacity-[0.2] mix-blend-screen"
+        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[min(150vw,1400px)] w-[min(150vw,1400px)] -translate-x-1/2 -translate-y-1/2 opacity-[0.22]"
       >
         <Image
           src="/textures/hero-tribal.png"

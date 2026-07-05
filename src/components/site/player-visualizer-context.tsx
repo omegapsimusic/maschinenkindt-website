@@ -5,9 +5,9 @@ import { createContext, useCallback, useContext, useMemo, useRef, useState } fro
 type StopFn = () => void;
 
 type Ctx = {
-  /** Has any track (Spotify or SoundCloud) ever started playing this session? */
-  everPlayed: boolean;
-  /** Is a track playing right now? */
+  /** Is a track playing right now? Drives the visualizer's visibility —
+   *  it closes fully back to its initial (hidden) state as soon as this
+   *  goes false, rather than lingering on screen. */
   playing: boolean;
   /** Called by a player source whenever its own play/pause state changes.
    *  `stop` pauses that specific source — used to enforce "only one thing
@@ -19,7 +19,6 @@ const PlayerVisualizerContext = createContext<Ctx | null>(null);
 
 export function PlayerVisualizerProvider({ children }: { children: React.ReactNode }) {
   const [playing, setPlaying] = useState(false);
-  const [everPlayed, setEverPlayed] = useState(false);
   const activeStopRef = useRef<StopFn | null>(null);
 
   const reportPlaying = useCallback((isPlaying: boolean, stop: StopFn) => {
@@ -29,15 +28,15 @@ export function PlayerVisualizerProvider({ children }: { children: React.ReactNo
       }
       activeStopRef.current = stop;
       setPlaying(true);
-      setEverPlayed(true);
     } else if (activeStopRef.current === stop) {
+      activeStopRef.current = null;
       setPlaying(false);
     }
   }, []);
 
   const value = useMemo(
-    () => ({ playing, everPlayed, reportPlaying }),
-    [playing, everPlayed, reportPlaying]
+    () => ({ playing, reportPlaying }),
+    [playing, reportPlaying]
   );
 
   return (

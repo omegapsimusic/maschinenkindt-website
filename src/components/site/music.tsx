@@ -78,7 +78,7 @@ export function Music() {
             <p className="u-label mt-2">ERR // DISCOGRAPHY_FETCH</p>
           </div>
         ) : (
-          <ul className="grid grid-cols-1 gap-px border border-[var(--hairline)] bg-[var(--hairline)] sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid grid-cols-1 items-start gap-px border border-[var(--hairline)] bg-[var(--hairline)] sm:grid-cols-2 lg:grid-cols-3">
             {(releases ?? Array.from({ length: 6 }).map(() => null)).map(
               (rel, i) => (
                 <MusicCard key={rel?.id ?? i} release={rel} index={i} />
@@ -101,12 +101,21 @@ function MusicCard({
   const [expanded, setExpanded] = useState(false);
   const embedRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<SpotifyEmbedController | null>(null);
+  const stopRef = useRef<(() => void) | null>(null);
   const { reportPlaying } = usePlayerVisualizer();
 
   // Mount the real Spotify embed only once the user asks for it — keeps the
   // card exactly as before until then. Controlled via the IFrame API (not a
   // plain <iframe src>) so we can hear playback_update events and feed the
   // shared tribal visualizer / single-active-player enforcement.
+  //
+  // Deliberately does NOT call controller.play() itself: that call lands
+  // asynchronously (after the API script + postMessage handshake), by which
+  // point the browser no longer treats it as tied to the click that opened
+  // the card, so autoplay gets silently blocked — the embed shows but never
+  // makes sound. Instead we just mount the controller and let the user press
+  // its own visible play button, which is a first-party gesture Spotify
+  // always honors.
   useEffect(() => {
     if (!expanded || !release || !embedRef.current) return;
     const container = embedRef.current;
@@ -120,10 +129,11 @@ function MusicCard({
         (controller) => {
           if (cancelled) return;
           controllerRef.current = controller;
+          const stop = () => controller.pause();
+          stopRef.current = stop;
           controller.addListener("playback_update", (e) => {
-            reportPlaying(!e.data.isPaused, () => controller.pause());
+            reportPlaying(!e.data.isPaused, stop);
           });
-          controller.play();
         }
       );
     });
@@ -131,6 +141,13 @@ function MusicCard({
     return () => {
       cancelled = true;
       controllerRef.current = null;
+      // Closing the card ends this source's turn — tell the shared
+      // visualizer/mutual-exclusion state so it doesn't keep thinking we're
+      // playing once the iframe is gone.
+      if (stopRef.current) {
+        reportPlaying(false, stopRef.current);
+        stopRef.current = null;
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [expanded]);
