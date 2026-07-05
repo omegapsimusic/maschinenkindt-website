@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Sigil } from "./sigil";
 import { WipeReveal } from "./wipe-reveal";
+import { usePlayerVisualizer } from "./player-visualizer-context";
+import { onSpotifyIframeApiReady, type SpotifyEmbedController } from "@/lib/spotify-iframe-api";
 import type { Release } from "@/app/api/discography/route";
 
 const TYPE_LABEL: Record<Release["albumType"], string> = {
@@ -96,6 +98,43 @@ function MusicCard({
   release: Release | null;
   index: number;
 }) {
+  const [expanded, setExpanded] = useState(false);
+  const embedRef = useRef<HTMLDivElement>(null);
+  const controllerRef = useRef<SpotifyEmbedController | null>(null);
+  const { reportPlaying } = usePlayerVisualizer();
+
+  // Mount the real Spotify embed only once the user asks for it — keeps the
+  // card exactly as before until then. Controlled via the IFrame API (not a
+  // plain <iframe src>) so we can hear playback_update events and feed the
+  // shared tribal visualizer / single-active-player enforcement.
+  useEffect(() => {
+    if (!expanded || !release || !embedRef.current) return;
+    const container = embedRef.current;
+    let cancelled = false;
+
+    onSpotifyIframeApiReady((api) => {
+      if (cancelled || !container) return;
+      api.createController(
+        container,
+        { uri: `spotify:album:${release.id}`, width: "100%", height: "152" },
+        (controller) => {
+          if (cancelled) return;
+          controllerRef.current = controller;
+          controller.addListener("playback_update", (e) => {
+            reportPlaying(!e.data.isPaused, () => controller.pause());
+          });
+          controller.play();
+        }
+      );
+    });
+
+    return () => {
+      cancelled = true;
+      controllerRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expanded]);
+
   // Skeleton state while the discography is loading.
   if (!release) {
     return (
@@ -156,6 +195,22 @@ function MusicCard({
           <span className="absolute bottom-0 left-0 right-0 flex translate-y-full items-center justify-center gap-2 bg-ember py-2.5 font-tech text-xs font-semibold uppercase tracking-[0.18em] text-void transition-transform duration-300 group-hover:translate-y-0">
             ▶ Auf Spotify hören
           </span>
+
+          {/* inline play control — reveals the real Spotify embed below the
+              card without leaving the page or requiring a Spotify login */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setExpanded((v) => !v);
+            }}
+            aria-label={expanded ? "Player schließen" : "Vorschau abspielen"}
+            aria-expanded={expanded}
+            className="absolute right-2 top-2 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-bone/25 bg-void/80 text-bone backdrop-blur-sm transition-colors hover:border-ember hover:text-ember"
+          >
+            <span className="font-tech text-sm leading-none">{expanded ? "✕" : "▶"}</span>
+          </button>
         </div>
 
         <div className="mt-5 flex items-end justify-between gap-4">
@@ -172,6 +227,12 @@ function MusicCard({
           </span>
         </dl>
       </a>
+
+      {expanded && (
+        <div className="mt-4 overflow-hidden rounded-sm" onClick={(e) => e.stopPropagation()}>
+          <div ref={embedRef} />
+        </div>
+      )}
     </motion.li>
   );
 }

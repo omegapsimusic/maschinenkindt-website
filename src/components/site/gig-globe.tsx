@@ -172,10 +172,6 @@ function GlobeScene({
   const wordmarkTexture = useEquirectLogoTexture("/textures/wordmark.png", {
     widthFrac: 0.17,
   });
-  const tribalTexture = useEquirectLogoTexture("/textures/tribal-glow.png", {
-    widthFrac: 0.48,
-    feather: true,
-  });
 
   // When a marker is selected, glide the camera around to face it instead of
   // just freezing auto-rotate wherever it happened to be — otherwise the
@@ -224,21 +220,6 @@ function GlobeScene({
             map={wordmarkTexture}
             transparent
             opacity={0.9}
-            depthWrite={false}
-          />
-        </mesh>
-      )}
-
-      {/* tribal mark, additive-blended and feathered so it reads as an
-          ambient glow/pattern woven into the surface, not a sticker */}
-      {tribalTexture && (
-        <mesh rotation={[0, Math.PI * 0.85, 0]}>
-          <sphereGeometry args={[RADIUS * 1.014, 48, 48]} />
-          <meshBasicMaterial
-            map={tribalTexture}
-            transparent
-            opacity={0.14}
-            blending={THREE.AdditiveBlending}
             depthWrite={false}
           />
         </mesh>

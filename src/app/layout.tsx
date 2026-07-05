@@ -1,9 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { Teko, Chakra_Petch, Space_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { SmoothScroll } from "@/components/site/smooth-scroll";
 import { Cursor } from "@/components/site/cursor";
 import { Intro } from "@/components/site/intro";
+import { PlayerVisualizerProvider } from "@/components/site/player-visualizer-context";
+import { TribalVisualizer } from "@/components/site/tribal-visualizer";
 
 const teko = Teko({
   weight: ["500", "600", "700"],
@@ -54,9 +57,13 @@ export default function RootLayout({
       className={`${teko.variable} ${chakra.variable} ${spaceMono.variable}`}
     >
       <body className="u-grain u-vignette-global min-h-dvh antialiased">
-        <Intro />
-        <Cursor />
-        <SmoothScroll>{children}</SmoothScroll>
+        <Script src="https://open.spotify.com/embed/iframe-api/v1" strategy="afterInteractive" />
+        <PlayerVisualizerProvider>
+          <Intro />
+          <Cursor />
+          <SmoothScroll>{children}</SmoothScroll>
+          <TribalVisualizer />
+        </PlayerVisualizerProvider>
       </body>
     </html>
   );
